@@ -96,7 +96,9 @@ public class EmpresaActivity extends AppCompatActivity implements BottomNavigati
 
         // -> Datos de la lista de líneas de buses:
         firebaseViewModel.getListaLineasBusesEmpresa().observe(this, listaLineasBusesEmpresa -> {
-            lineaBusEmpresaAdapter.setListaLineasBusesEmpresa(listaLineasBusesEmpresa);
+            if(listaLineasBusesEmpresa != null){
+                lineaBusEmpresaAdapter.setListaLineasBusesEmpresa(listaLineasBusesEmpresa);
+            }
         });
     }
 

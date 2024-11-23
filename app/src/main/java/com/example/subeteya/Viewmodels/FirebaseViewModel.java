@@ -218,7 +218,7 @@ public class FirebaseViewModel extends ViewModel {
                 for (DocumentSnapshot ds : querySnapshot.getDocuments()) {
                     LineaBusDTO lineaBusDTO = ds.toObject(LineaBusDTO.class);
 
-                    if(ds.getId().equals(empresaUid)){
+                    if(lineaBusDTO.getRefEmpresa().equals(firestore.collection("usuario").document(empresaUid))){
                         Task<LineaBus> mapearTask = mapearLineaBusDtoABean(lineaBusDTO, ds.getId());
 
                         // Añadimos la tarea a la lista y manejamos el resultado

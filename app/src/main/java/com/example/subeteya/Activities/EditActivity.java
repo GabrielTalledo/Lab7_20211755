@@ -372,7 +372,7 @@ public class EditActivity extends AppCompatActivity {
                             Log.d("Firebase", "Imagen subida. ");
                             cerrarDialogoProgreso();
                             Intent intent = new Intent(this, EmpresaActivity.class);
-                            intent.putExtra("mensaje","Se editó exitosamente el carrusel de fotos de  la línea '"+lineaBus.getNombre()+"'.");
+                            intent.putExtra("mensaje","Se editó exitosamente el carrusel de fotos de la línea '"+lineaBus.getNombre()+"'.");
                             startActivity(intent);
                             supportFinishAfterTransition();
                         })
