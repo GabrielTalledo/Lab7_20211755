@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
@@ -100,24 +101,34 @@ public class LineaBusAdapter extends RecyclerView.Adapter<LineaBusAdapter.LineaB
 
         public void cargarImagenDesdeStorage(LineaBus lineaBus) {
             // Se carga solo la primera foto del carrusel:
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(lineaBus.getRutasCarrusel().get(0));
-            GlideApp.with(usuarioActivity)
-                    .load(storageRef)
-                    .addListener(new RequestListener<Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                            return false;
-                        }
+            if(lineaBus.getRutasCarrusel() != null && !lineaBus.getRutasCarrusel().isEmpty()){
+                StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(lineaBus.getRutasCarrusel().get(0));
+                GlideApp.with(usuarioActivity)
+                        .load(storageRef)
+                        .addListener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                return false;
+                            }
 
-                        @Override
-                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                            progressParaImageView.setVisibility(View.GONE);
-                            progressLayout.setVisibility(View.GONE);
-                            fotoImageView.setVisibility(View.VISIBLE);
-                            return false;
-                        }
-                    })
-                    .into(fotoImageView);
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                progressParaImageView.setVisibility(View.GONE);
+                                progressLayout.setVisibility(View.GONE);
+                                fotoImageView.setVisibility(View.VISIBLE);
+                                return false;
+                            }
+                        })
+                        .into(fotoImageView);
+            }else{
+                progressParaImageView.setVisibility(View.GONE);
+                progressLayout.setVisibility(View.GONE);
+                fotoImageView.setVisibility(View.VISIBLE);
+                Glide.with(usuarioActivity)
+                        .load(R.drawable.placeholder)
+                        .into(fotoImageView);
+            }
+
         }
     }
 

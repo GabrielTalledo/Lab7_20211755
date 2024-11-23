@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
@@ -54,6 +55,7 @@ public class LecturaQrFragment extends Fragment {
     FirebaseAuth auth;
     AlertDialog progresoDialog;
     Boolean tieneSuscripcion;
+    long umbralTiempo = 1L;
 
     public LecturaQrFragment() {
     }
@@ -158,21 +160,27 @@ public class LecturaQrFragment extends Fragment {
     // -> Fotito de Storage:
     public void cargarImagenDesdeStorage(LineaBus lineaBus) {
         // Se carga solo la primera foto del carrusel:
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(lineaBus.getRutasCarrusel().get(0));
-        GlideApp.with(getContext())
-                .load(storageRef)
-                .addListener(new RequestListener<Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        return false;
-                    }
+        if(lineaBus.getRutasCarrusel() == null || lineaBus.getRutasCarrusel().isEmpty()){
+            Glide.with(getContext())
+                    .load(R.drawable.placeholder)
+                    .into(binding.circularImageView);
+        }else{
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(lineaBus.getRutasCarrusel().get(0));
+            GlideApp.with(getContext())
+                    .load(storageRef)
+                    .addListener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                            return false;
+                        }
 
-                    @Override
-                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        return false;
-                    }
-                })
-                .into(binding.circularImageView);
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                            return false;
+                        }
+                    })
+                    .into(binding.circularImageView);
+        }
     }
 
     // -> Métodos para el flujo de viaje:
@@ -222,7 +230,7 @@ public class LecturaQrFragment extends Fragment {
                         }else{
                             long diferenciaMinutos = obtenerDiferenciaEnMinutos(usuario.getFechaFin(),usuario.getFechaInicio());
                             Double costoFinal;
-                            if(diferenciaMinutos<15){
+                            if(diferenciaMinutos<umbralTiempo){
                                 costoFinal = Double.parseDouble(String.format("%.1f",usuario.getLineaBus().getPrecioUnitario()-usuario.getLineaBus().getPrecioUnitario()*0.2));
                             }else{
                                 costoFinal = Double.parseDouble(String.format("%.1f",usuario.getLineaBus().getPrecioUnitario()-usuario.getLineaBus().getPrecioUnitario()*0.05));
@@ -318,7 +326,7 @@ public class LecturaQrFragment extends Fragment {
                                 if (task.isSuccessful()) {
                                     Boolean existe = task.getResult();
                                     if (existe) {
-                                        if(lineaBusUid.equals(firebaseViewModel.getUsuarioActual().getValue().getLineaBus().getUid())){
+                                        if(firebaseViewModel.getUsuarioActual().getValue().getLineaBus() == null|| lineaBusUid.equals(firebaseViewModel.getUsuarioActual().getValue().getLineaBus().getUid())){
                                             firebaseViewModel.obtenerLineaBusActual(lineaBusUid);
                                             firebaseViewModel.recargarLineaBusActual(lineaBusUid);
                                             empezarViaje(lineaBusUid);
@@ -417,6 +425,7 @@ public class LecturaQrFragment extends Fragment {
                         campos.put("fechaFin", new Timestamp(new Date()));
                         long diferenciaMinutos = obtenerDiferenciaEnMinutos(fechaFin,firebaseViewModel.getUsuarioActual().getValue().getFechaInicio());
 
+                        Log.d("TAG", "diferencia en minutos: "+diferenciaMinutos);
 
                         // Validación de suscripción:
                         if(firebaseViewModel.getUsuarioActual().getValue() != null && firebaseViewModel.getUsuarioActual().getValue().getLineaBus() != null) {
@@ -434,7 +443,7 @@ public class LecturaQrFragment extends Fragment {
                             Double cashback;
                             Integer cashbackPorcentaje;
 
-                            if(diferenciaMinutos<15){
+                            if(diferenciaMinutos<umbralTiempo){
                                 cashback = lineaBusDTO.getPrecioUnitario()*0.2;
                                 cashbackPorcentaje = 20;
                             }else{

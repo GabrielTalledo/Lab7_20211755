@@ -33,23 +33,23 @@
 
     <ImageButton
         android:id="@+id/btn_edit"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_gravity="end|top"
-        android:layout_margin="6dp"
+        android:layout_margin="10dp"
         android:src="@drawable/editar"
         android:backgroundTint="@color/md_theme_primary"
-        android:elevation="8dp"
+        android:elevation="14dp"
         android:contentDescription="Editar imagen"/>
 
     <ImageButton
         android:id="@+id/btn_eliminar"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_gravity="end|bottom"
-        android:layout_margin="6dp"
+        android:layout_margin="10dp"
         android:src="@drawable/eliminar"
-        android:elevation="8dp"
+        android:elevation="14dp"
         android:backgroundTint="@color/md_theme_tertiaryContainer_mediumContrast"
-        android:contentDescription="Editar imagen"/>
+        android:contentDescription="Eliminar imagen"/>
 </com.google.android.material.carousel.MaskableFrameLayout>

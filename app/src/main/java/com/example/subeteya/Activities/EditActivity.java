@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 
@@ -106,7 +107,11 @@ public class EditActivity extends AppCompatActivity {
         }
 
         // -> Listas para la edición del carrusel:
-        listaFotosRutasCarrusel = lineaBus.getRutasCarrusel();
+        if (lineaBus.getRutasCarrusel() != null && !lineaBus.getRutasCarrusel().isEmpty() ) {
+            listaFotosRutasCarrusel = lineaBus.getRutasCarrusel();
+        }else{
+            listaFotosRutasCarrusel = new ArrayList<>();
+        }
         listaUriCarrusel = new HashMap<>();
         listaFotosEliminar = new ArrayList<>();
 
@@ -126,6 +131,9 @@ public class EditActivity extends AppCompatActivity {
         firebaseViewModel.recargarLineaBusActual(lineaBus.getUid());
 
         firebaseViewModel.getUsuarioActual().observe(this, usuario -> {
+            if(lineaBus.getRutasCarrusel() == null){
+                lineaBus.setRutasCarrusel(new ArrayList<>());
+            }
             actualizarUI(usuario,lineaBus);
         });
 
@@ -164,8 +172,7 @@ public class EditActivity extends AppCompatActivity {
 
     // -> Permisos cámara:
     private void pedirPermisoCamara(){
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED){
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
         }else{
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},PERMISO_CAMARA);
         }
@@ -446,14 +453,22 @@ public class EditActivity extends AppCompatActivity {
                 .setCancelable(false)
                 .setTitle("Permisos requeridos!")
                 .setMessage("Para poder seguir con la edición del carrusel, debes otorgar permisos de cámara.")
-                .setPositiveButton("Solicitar", (dialog, which) -> {
-                    pedirPermisoCamara();
+                .setPositiveButton("Configuración", (dialog, which) -> {
+                    if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+                        requestPermissions(new String[]{Manifest.permission.CAMERA}, PERMISO_CAMARA);
+                    } else {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", this.getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
+                    }
+                    dialog.dismiss();
                 })
                 .setNegativeButton("Salir", (dialog, which) -> {
                     supportFinishAfterTransition();
+                    dialog.dismiss();
                 })
-                .create();
-        progresoDialog.show();
+                .show();
     }
 
     private void mostrarDialogoProgreso() {
@@ -487,9 +502,14 @@ public class EditActivity extends AppCompatActivity {
             binding.btnEditarBus.setEnabled(true);
             binding.btnEditarBus.setAlpha(1.0f);
             carruselAdapter.setListas(listaFotosRutasCarrusel,listaUriCarrusel);
-            if(posicion != 0){
+            if(posicion > 0){
                 rvCarrusel.smoothScrollToPosition(posicion);
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 }

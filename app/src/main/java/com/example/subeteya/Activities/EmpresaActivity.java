@@ -49,7 +49,7 @@ public class EmpresaActivity extends AppCompatActivity implements BottomNavigati
         setContentView(binding.getRoot());
 
         // Bottom menú:
-        bottomNav = binding.bottomNavigation;
+        bottomNav = binding.bottomNavigationEmpresa;
         bottomNav.setOnNavigationItemSelectedListener(this);
         bottomNav.setSelectedItemId(R.id.empresa_linea_bus);
 
@@ -63,7 +63,7 @@ public class EmpresaActivity extends AppCompatActivity implements BottomNavigati
         // Gestión de intent (mensajito):
         Intent intent = getIntent();
         if(intent.getStringExtra("mensaje") != null){
-            Snackbar.make(binding.getRoot(), intent.getStringExtra("mensaje"), Snackbar.LENGTH_LONG).setAnchorView(binding.bottomNavigation).show();
+            Snackbar.make(this,binding.getRoot(),intent.getStringExtra("mensaje"),Snackbar.LENGTH_LONG).setAnchorView(bottomNav).show();
         }
 
         // ------------

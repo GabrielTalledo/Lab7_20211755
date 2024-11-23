@@ -90,11 +90,17 @@ public class DetailsActivity extends AppCompatActivity {
         firebaseViewModel.recargarLineaBusActual(lineaBus.getUid());
 
         firebaseViewModel.getLineaBusActual().observe(this, lineaBus -> {
+            if(lineaBus.getRutasCarrusel() == null){
+                lineaBus.setRutasCarrusel(new ArrayList<>());
+            }
             this.lineaBus = lineaBus;
             actualizarUI(firebaseViewModel.getUsuarioActual().getValue(), lineaBus);
         });
 
         firebaseViewModel.getUsuarioActual().observe(this, usuario -> {
+            if(lineaBus.getRutasCarrusel() == null){
+                lineaBus.setRutasCarrusel(new ArrayList<>());
+            }
             actualizarUI(firebaseViewModel.getUsuarioActual().getValue(), lineaBus);
         });
 

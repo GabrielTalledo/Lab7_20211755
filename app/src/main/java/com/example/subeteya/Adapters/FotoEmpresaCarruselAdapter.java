@@ -58,6 +58,9 @@ public class FotoEmpresaCarruselAdapter extends RecyclerView.Adapter<FotoEmpresa
 
     @Override
     public int getItemCount() {
+        if(listaRutasCarrusel == null){
+            return 0;
+        }
         return listaRutasCarrusel.size();
     }
 
@@ -85,14 +88,17 @@ public class FotoEmpresaCarruselAdapter extends RecyclerView.Adapter<FotoEmpresa
 
         void bind(String fotoRuta, FotoEmpresaCarruselViewHolder holder, int position) {
 
-            // Vista:
-            if(position == 0){
+            /* Vista:
+            if(position == 0 &&){
                 btnEditar.setVisibility(View.GONE);
                 btnEliminar.setVisibility(View.GONE);
             }else{
                 btnEditar.setVisibility(View.VISIBLE);
                 btnEliminar.setVisibility(View.VISIBLE);
-            }
+            }*/
+
+            btnEditar.setVisibility(View.VISIBLE);
+            btnEliminar.setVisibility(View.VISIBLE);
 
             // Botones:
             btnEditar.setOnClickListener(l -> {
