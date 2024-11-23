@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "30577190902",
+    "project_id": "subeteya-5503f",
+    "storage_bucket": "subeteya-5503f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:30577190902:android:64e2a8abb36176dd8349d7",
+        "android_client_info": {
+          "package_name": "com.example.subeteya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIa0csR7esNxs2c-QlEhqX10xxWf7SytM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

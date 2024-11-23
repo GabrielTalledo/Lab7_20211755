@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.carousel.MaskableFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginEnd="15dp">
+
+    <LinearLayout
+        android:id="@+id/progress_layout_carrusel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/progressParaImageViewCarrusel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/fotito_carrusel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="Fotito del carrusel"
+        android:transitionName="image"
+        android:scaleType="centerCrop"
+        app:srcCompat="@drawable/bus_example" />
+
+    <ImageButton
+        android:id="@+id/btn_edit"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="end|top"
+        android:layout_margin="3dp"
+        android:src="@drawable/editar"
+        android:backgroundTint="@color/md_theme_primary"
+        android:contentDescription="Editar imagen"/>
+
+    <ImageButton
+        android:id="@+id/btn_eliminar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="3dp"
+        android:src="@drawable/eliminar"
+        android:backgroundTint="@color/md_theme_tertiaryContainer_mediumContrast"
+        android:contentDescription="Editar imagen"/>
+</com.google.android.material.carousel.MaskableFrameLayout>

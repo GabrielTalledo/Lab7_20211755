@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activities.RegisterActivity">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/text_inicio_bienvenida_"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/product_sans"
+                android:text="Registro"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/text_inicio_bienvenida_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:text="Por favor, introduzca sus datos:" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/field_nombre_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Nombre"
+                app:endIconMode="clear_text"
+                app:errorEnabled="true"
+                app:errorTextAppearance="@style/textoError"
+                app:startIconDrawable="@drawable/nombre">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/field_nombre"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:inputType="text"
+                    android:textSize="12sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/field_apellido_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Apellido"
+                app:endIconMode="clear_text"
+                app:errorEnabled="true"
+                app:errorTextAppearance="@style/textoError"
+                app:startIconDrawable="@drawable/apellido">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/field_apellido"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:inputType="text"
+                    android:textSize="12sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/field_correo_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Correo electrónico"
+                app:endIconMode="clear_text"
+                app:errorEnabled="true"
+                app:errorTextAppearance="@style/textoError"
+                app:startIconDrawable="@drawable/email">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/field_correo"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:textSize="12sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/field_password_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Contraseña"
+                app:endIconMode="password_toggle"
+                app:errorEnabled="true"
+                app:errorTextAppearance="@style/textoError"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/field_email_layout"
+                app:startIconDrawable="@drawable/password">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/field_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:inputType="textPassword"
+                    android:textSize="12sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/field_password2_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Repetición de contraseña"
+                app:endIconMode="password_toggle"
+                app:errorEnabled="true"
+                app:errorTextAppearance="@style/textoError"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/field_email_layout"
+                app:startIconDrawable="@drawable/password_2">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/field_password2"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:inputType="textPassword"
+                    android:textSize="12sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btn_registrar"
+                style="@style/Widget.Material3.Button.ElevatedButton.Icon"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginHorizontal="55dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="25dp"
+                android:backgroundTint="@color/md_theme_onPrimaryFixedVariant"
+                android:padding="0dp"
+                android:text="Registrar"
+                android:textColor="@color/md_theme_onTertiary_mediumContrast"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:iconGravity="textStart"
+                app:iconTint="@color/md_theme_background"
+                app:rippleColor="@color/md_theme_background_mediumContrast" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
