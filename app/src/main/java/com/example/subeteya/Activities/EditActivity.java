@@ -63,6 +63,7 @@ public class EditActivity extends AppCompatActivity {
     // Elementos auxiliares:
     List<String> listaFotosRutasCarrusel;
     HashMap<String,Uri> listaUriCarrusel;
+    List<String> listaFotosEliminar;
     Uri fotoUri;
     int posicion;
 
@@ -107,6 +108,7 @@ public class EditActivity extends AppCompatActivity {
         // -> Listas para la edición del carrusel:
         listaFotosRutasCarrusel = lineaBus.getRutasCarrusel();
         listaUriCarrusel = new HashMap<>();
+        listaFotosEliminar = new ArrayList<>();
 
 
         // -> Configuración de RecyclerView y Adapter:
@@ -161,7 +163,6 @@ public class EditActivity extends AppCompatActivity {
 
 
     // -> Permisos cámara:
-
     private void pedirPermisoCamara(){
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED){
@@ -181,17 +182,26 @@ public class EditActivity extends AppCompatActivity {
 
 
     // -> Fotos:
-
     public void eliminarFotoLocal(int posicionAdapter){
+        mostrarDialogoProgreso();
         posicion = posicionAdapter;
         if(listaUriCarrusel.containsKey(listaFotosRutasCarrusel.get(posicion))){
             listaUriCarrusel.remove(listaFotosRutasCarrusel.get(posicion));
+            listaFotosRutasCarrusel.remove(posicion);
+            posicion -= 1;
+            cerrarDialogoProgreso();
             actualizarUI(firebaseViewModel.getUsuarioActual().getValue(),lineaBus);
         }else{
-            eliminarFotoFirebase(listaFotosRutasCarrusel.get(posicion));
+            String ruta = listaFotosRutasCarrusel.get(posicion);
+            listaFotosRutasCarrusel.remove(posicion);
+            posicion -= 1;
+            listaFotosEliminar.add(ruta);
+            cerrarDialogoProgreso();
+            actualizarUI(firebaseViewModel.getUsuarioActual().getValue(),lineaBus);
         }
         //carruselAdapter.setListas(listaFotosRutasCarrusel,listaUriCarrusel);
     }
+
 
     public void eliminarFotoFirebase(String ruta){
 
@@ -213,11 +223,29 @@ public class EditActivity extends AppCompatActivity {
                 .addOnCompleteListener(l -> {
                     if(l.isSuccessful()){
                         actualizarUI(firebaseViewModel.getUsuarioActual().getValue(),lineaBus);
+                        cerrarDialogoProgreso();
                         Log.d("Firebase", "Se eliminó la imagen");
                     }else{
+                        cerrarDialogoProgreso();
                         Log.d("Firebase", "Error al eliminar la imagen" );
                     }
                 });
+    }
+
+    public void eliminarFotosAntiguas(){
+
+        // Storage:
+        for(String ruta: listaFotosEliminar){
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(ruta);
+            storageRef.delete()
+                    .addOnCompleteListener(l -> {
+                        if(l.isSuccessful()){
+                            Log.d("Firebase", "Se eliminó la imagen");
+                        }else{
+                            Log.d("Firebase", "Error al eliminar la imagen" );
+                        }
+                    });
+        }
     }
 
     public void abrirSelectorDeFotosAlt(int posicionAdapter) {
@@ -290,6 +318,7 @@ public class EditActivity extends AppCompatActivity {
                 String ruta = "carrusel/" + lineaBus.getUid() +"-"+ System.currentTimeMillis() + new Random().nextInt(69) + ".jpg";
                 listaFotosRutasCarrusel.add(ruta);
                 listaUriCarrusel.put(ruta,fotoUri);
+                posicion = listaFotosRutasCarrusel.size()-1;
                 actualizarUI(firebaseViewModel.getUsuarioActual().getValue(),lineaBus);
                 //carruselAdapter.setListas(listaFotosRutasCarrusel,listaUriCarrusel);
             }
@@ -298,6 +327,7 @@ public class EditActivity extends AppCompatActivity {
                 String ruta = "carrusel/" + lineaBus.getUid() +"-"+ System.currentTimeMillis() + new Random().nextInt(69) + ".jpg";
                 listaFotosRutasCarrusel.add(ruta);
                 listaUriCarrusel.put(ruta,fotoUri);
+                posicion = listaFotosRutasCarrusel.size()-1;
                 actualizarUI(firebaseViewModel.getUsuarioActual().getValue(),lineaBus);
                 //carruselAdapter.setListas(listaFotosRutasCarrusel,listaUriCarrusel);
             }
@@ -305,21 +335,31 @@ public class EditActivity extends AppCompatActivity {
             if (requestCode == INTENT_GALERIA_ALT) {
                 fotoUri = data.getData();
                 String ruta = listaFotosRutasCarrusel.get(posicion);
-                if(listaUriCarrusel.containsKey(ruta)){
-                    listaUriCarrusel.replace(ruta,fotoUri);
-                }else{
-                    listaUriCarrusel.put(ruta,fotoUri);
-                }
+
+                // Guaradamos la imagen antigua para eliminarla:
+                listaFotosEliminar.add(ruta);
+
+                // Actualizamos la lista:
+                listaUriCarrusel.remove(ruta);
+                listaFotosRutasCarrusel.remove(posicion);
+                ruta = "carrusel/" + lineaBus.getUid() +"-"+ System.currentTimeMillis() + new Random().nextInt(69) + ".jpg";
+                listaFotosRutasCarrusel.add(posicion,ruta);
+                listaUriCarrusel.put(ruta,fotoUri);
                 actualizarUI(firebaseViewModel.getUsuarioActual().getValue(),lineaBus);
                 //carruselAdapter.setListas(listaFotosRutasCarrusel,listaUriCarrusel);
             }
             if (requestCode == INTENT_CAMARA_ALT){
                 String ruta = listaFotosRutasCarrusel.get(posicion);
-                if(listaUriCarrusel.containsKey(ruta)){
-                    listaUriCarrusel.replace(ruta,fotoUri);
-                }else{
-                    listaUriCarrusel.put(ruta,fotoUri);
-                }
+
+                // Guaradamos la imagen antigua para eliminarla:
+                listaFotosEliminar.add(ruta);
+
+                // Actualizamos la lista:
+                listaUriCarrusel.remove(ruta);
+                listaFotosRutasCarrusel.remove(posicion);
+                ruta = "carrusel/" + lineaBus.getUid() +"-"+ System.currentTimeMillis() + new Random().nextInt(69) + ".jpg";
+                listaFotosRutasCarrusel.add(posicion,ruta);
+                listaUriCarrusel.put(ruta,fotoUri);
                 actualizarUI(firebaseViewModel.getUsuarioActual().getValue(),lineaBus);
                 //carruselAdapter.setListas(listaFotosRutasCarrusel,listaUriCarrusel);
             }
@@ -328,7 +368,6 @@ public class EditActivity extends AppCompatActivity {
 
 
     // -> Subir fotos:
-
     private void subirImagenesAFirebase() {
 
         mostrarDialogoProgreso();
@@ -352,10 +391,17 @@ public class EditActivity extends AppCompatActivity {
         int size = listaUriCarrusel.size();
         int index = 0;
 
+        eliminarFotosAntiguas();
+
         if(size<1){
             cerrarDialogoProgreso();
             Intent intent = new Intent(this, EmpresaActivity.class);
-            intent.putExtra("mensaje","La línea de bus '"+lineaBus.getNombre()+"' no tuvo cambios adicionales.");
+            if(listaFotosEliminar.isEmpty()){
+                intent.putExtra("mensaje","La línea de bus '"+lineaBus.getNombre()+"' no tuvo cambios adicionales.");
+            }else{
+                intent.putExtra("mensaje","Se editó exitosamente el carrusel de fotos de la línea '"+lineaBus.getNombre()+"'.");
+
+            }
             startActivity(intent);
             supportFinishAfterTransition();
         }
@@ -395,7 +441,6 @@ public class EditActivity extends AppCompatActivity {
 
 
     // -> Diálogos:
-
     private void mostrarDialogoPermisos() {
         new MaterialAlertDialogBuilder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
                 .setCancelable(false)
@@ -427,7 +472,6 @@ public class EditActivity extends AppCompatActivity {
     }
 
     // -> Vistas:
-
     public void actualizarUI(Usuario usuario, LineaBus lineaBus){
         if(usuario == null){
             binding.btnEditarBus.setText("Cargando");
@@ -443,6 +487,9 @@ public class EditActivity extends AppCompatActivity {
             binding.btnEditarBus.setEnabled(true);
             binding.btnEditarBus.setAlpha(1.0f);
             carruselAdapter.setListas(listaFotosRutasCarrusel,listaUriCarrusel);
+            if(posicion != 0){
+                rvCarrusel.smoothScrollToPosition(posicion);
+            }
         }
     }
 }

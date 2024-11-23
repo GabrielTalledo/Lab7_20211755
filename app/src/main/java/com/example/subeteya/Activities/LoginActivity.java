@@ -102,51 +102,62 @@ public class LoginActivity extends AppCompatActivity {
 
     private void login(String email,String password) {
         mostrarDialogoProgreso();
-        auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        // Si la autenticación es exitosa, obtenemos al usuario en firestore:
-                        FirebaseUser user = auth.getCurrentUser();
-                        if (user != null) {
-                            // Obtenemos el uid del usuario:
-                            db.collection("usuario").whereEqualTo("correo", email).get().addOnCompleteListener(task1 -> {
-                                if (task1.isSuccessful() && task1.getResult() != null && !task1.getResult().isEmpty()) {
-                                    UsuarioDTO usuarioDTO = task1.getResult().getDocuments().get(0).toObject(UsuarioDTO.class);
-                                    cerrarDialogoProgreso();
 
-                                    Intent intent = new Intent();
+        db.collection("usuario").whereEqualTo("correo",email)
+                        .get()
+                        .addOnSuccessListener(documentSnapshots -> {
 
-                                    // Redirigimos según el rol:
-                                    if(usuarioDTO.getRol().equals("Usuario Operativo")){
-                                        intent = new Intent(LoginActivity.this, UsuarioOperativoActivity.class);
-                                    }else{
-                                        // Empresa de transporte:
-                                        intent = new Intent(LoginActivity.this, EmpresaActivity.class);
-                                    }
-
-                                    intent.putExtra("mensaje", "Inició sesión con éxito!");
-                                    startActivity(intent);
-                                    supportFinishAfterTransition();
-
-                                } else {
-                                    // Si el usuario no existe en firestore (aunque, esto no puede pasar xd):
-                                    cerrarDialogoProgreso();
-                                    Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-                                    intent.putExtra("email", email);
-                                    startActivity(intent);
-                                    supportFinishAfterTransition();
-                                }
-                            }).addOnFailureListener(e -> {
+                            if(documentSnapshots.isEmpty()){
                                 cerrarDialogoProgreso();
-                                Snackbar.make(this, binding.getRoot(), "El usuario no existe en base de datos!", Snackbar.LENGTH_LONG).show();
-                            });
+                                mostrarDialogRegistro(this, email);
+                            }else{
+                                auth.signInWithEmailAndPassword(email, password)
+                                        .addOnCompleteListener(this, task -> {
+                                            if (task.isSuccessful()) {
+                                                // Si la autenticación es exitosa, obtenemos al usuario en firestore:
+                                                FirebaseUser user = auth.getCurrentUser();
+                                                if (user != null) {
+                                                    // Obtenemos el uid del usuario:
+                                                    db.collection("usuario").whereEqualTo("correo", email).get().addOnCompleteListener(task1 -> {
+                                                        if (task1.isSuccessful() && task1.getResult() != null && !task1.getResult().isEmpty()) {
+                                                            UsuarioDTO usuarioDTO = task1.getResult().getDocuments().get(0).toObject(UsuarioDTO.class);
+                                                            cerrarDialogoProgreso();
 
-                        }
-                    } else {
-                        cerrarDialogoProgreso();
-                        mostrarDialogRegistro(this, email);
-                    }
-                });
+                                                            Intent intent = new Intent();
+
+                                                            // Redirigimos según el rol:
+                                                            if(usuarioDTO.getRol().equals("Usuario Operativo")){
+                                                                intent = new Intent(LoginActivity.this, UsuarioOperativoActivity.class);
+                                                            }else{
+                                                                // Empresa de transporte:
+                                                                intent = new Intent(LoginActivity.this, EmpresaActivity.class);
+                                                            }
+
+                                                            intent.putExtra("mensaje", "Inició sesión con éxito!");
+                                                            startActivity(intent);
+                                                            supportFinishAfterTransition();
+
+                                                        } else {
+                                                            // Si el usuario no existe en firestore (aunque, esto no puede pasar xd):
+                                                            cerrarDialogoProgreso();
+                                                            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+                                                            intent.putExtra("email", email);
+                                                            startActivity(intent);
+                                                            supportFinishAfterTransition();
+                                                        }
+                                                    }).addOnFailureListener(e -> {
+                                                        cerrarDialogoProgreso();
+                                                        Snackbar.make(this, binding.getRoot(), "El usuario no existe en base de datos!", Snackbar.LENGTH_LONG).show();
+                                                    });
+
+                                                }
+                                            } else {
+                                                cerrarDialogoProgreso();
+                                                Snackbar.make(this, binding.getRoot(), "Credenciales incorrectas!", Snackbar.LENGTH_LONG).show();
+                                            }
+                                        });
+                            }
+                        });
     }
 
     // -> Validación de campos:
@@ -175,12 +186,12 @@ public class LoginActivity extends AppCompatActivity {
                 String email = s.toString().trim();
                 // Verificamos si el campo está vacío
                 if (email.isEmpty()) {
-                    binding.fieldEmailLayout.setError("El campo de correo no puede estar vacío!");
+                    binding.fieldEmailLayout.setError("El campo de correo no debe estar vacío!");
                     modificarBtnIngresar(false);
                 }
                 // verificamos el formato
                 else if (!patron.matcher(email).matches()) {
-                    binding.fieldEmailLayout.setError("Ingresa un correo electrónico válido!");
+                    binding.fieldEmailLayout.setError("Ingrese un correo electrónico válido!");
                     modificarBtnIngresar(false);
                 } else {
                     // Aqui el correo es válido asi q borramos cualquier mensaje de error
@@ -207,12 +218,12 @@ public class LoginActivity extends AppCompatActivity {
                 String password = s.toString().trim();
                 // Verificamos si el campo está vacío
                 if (password.isEmpty()) {
-                    binding.fieldPasswordLayout.setError("El campo de contraseña no puede estar vacío!");
+                    binding.fieldPasswordLayout.setError("El campo de contraseña no debe estar vacío!");
                     modificarBtnIngresar(false);
                 }
                 // Verificamos el formato (mínimo 8 caracteres, al menos una letra y un número)
                 else if (!patron.matcher(password).matches()) {
-                    binding.fieldPasswordLayout.setError("La contraseña debe tener al menos 8 caracteres, incluyendo números y letras!");
+                    binding.fieldPasswordLayout.setError("El formato de contraseña tiene como mínimo 8 caracteres, incluyendo números y letras!");
                     modificarBtnIngresar(false);
                 } else {
                     // La contraseña es válida, eliminamos el mensaje de error
@@ -242,7 +253,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public void mostrarDialogRegistro(Context context, String email){
         new MaterialAlertDialogBuilder(context)
-                .setTitle("Correo electrónico no encontrado!")
+                .setTitle("Correo electrónico introducido no encontrado!")
                 .setMessage("Desea proceder con el proceso de registro utilizando el correo '"+email+"' ?")
                 .setPositiveButton("Sí", (dialog, which) -> {
                     Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);

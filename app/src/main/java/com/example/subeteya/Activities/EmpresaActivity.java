@@ -110,7 +110,6 @@ public class EmpresaActivity extends AppCompatActivity implements BottomNavigati
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item){
-
         return true;
     }
 }

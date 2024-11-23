@@ -153,7 +153,7 @@ public class Usuario implements Serializable {
     }
 
     public void setSaldo(Double saldo) {
-        this.saldo = saldo;
+        this.saldo = Double.parseDouble(String.format("%.1f",saldo));
     }
 
     public String getUid() {

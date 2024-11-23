@@ -117,7 +117,7 @@ public class LecturaQrFragment extends Fragment {
 
         actualizarVistaFlujoViaje(firebaseViewModel.getUsuarioActual().getValue());
 
-        /*firebaseViewModel.getUsuarioActual().observe(getViewLifecycleOwner(), usuario -> {
+        firebaseViewModel.getUsuarioActual().observe(getViewLifecycleOwner(), usuario -> {
             binding.textUsuarioActual.setText(usuario.getNombreCompleto());
             binding.textSaldoActual.setText("S/. "+String.format("%.1f",usuario.getSaldo()));
             if(usuario.getLineaBus() == null){
@@ -141,7 +141,7 @@ public class LecturaQrFragment extends Fragment {
             }else{
                 actualizarVistaFlujoViaje(usuario);
             }
-        });*/
+        });
 
         // -> Leer QR:
         binding.btnLeerQr.setOnClickListener(l -> {
@@ -159,7 +159,7 @@ public class LecturaQrFragment extends Fragment {
     public void cargarImagenDesdeStorage(LineaBus lineaBus) {
         // Se carga solo la primera foto del carrusel:
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(lineaBus.getRutasCarrusel().get(0));
-        GlideApp.with(requireActivity())
+        GlideApp.with(getContext())
                 .load(storageRef)
                 .addListener(new RequestListener<Drawable>() {
                     @Override
@@ -312,22 +312,24 @@ public class LecturaQrFragment extends Fragment {
                     }
 
                 }else
-                    if(firebaseViewModel.getUsuarioActual().getValue().getLineaBus() == null) {
-                        // Validamos si el QR corresponde a una línea de bus para empezar el viaje:
-                        firebaseViewModel.validarDocumentoPorUid(lineaBusUid)
-                                .addOnCompleteListener(task -> {
-                                    if (task.isSuccessful()) {
-                                        Boolean existe = task.getResult();
-                                        if (existe) {
+                    // Validamos si el QR corresponde a una línea de bus para empezar el viaje:
+                    firebaseViewModel.validarDocumentoPorUid(lineaBusUid)
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Boolean existe = task.getResult();
+                                    if (existe) {
+                                        if(lineaBusUid.equals(firebaseViewModel.getUsuarioActual().getValue().getLineaBus().getUid())){
                                             firebaseViewModel.obtenerLineaBusActual(lineaBusUid);
                                             firebaseViewModel.recargarLineaBusActual(lineaBusUid);
                                             empezarViaje(lineaBusUid);
-                                        } else {
-                                            mostrarDialogGeneral("Atención!","El código QR leído no corresponde a ninguna línea de bus registrada");
+                                        }else{
+                                            mostrarDialogGeneral("Atención!","El código QR leído no corresponde a la línea de bus de su viaje actual");
                                         }
+                                    } else {
+                                        mostrarDialogGeneral("Atención!","El código QR leído no corresponde a ninguna línea de bus registrada");
                                     }
-                                });
-                    }
+                                }
+                            });
             } else {
                 // Si el qr no funcionó :v
             }
@@ -354,8 +356,11 @@ public class LecturaQrFragment extends Fragment {
                         Log.d("TAG", "empezarViaje: 3 "+firebaseViewModel.getUsuarioActual().getValue().getLineaBusSuscripcion().size());
                         if(firebaseViewModel.getUsuarioActual().getValue() != null && firebaseViewModel.getUsuarioActual().getValue().getLineaBus() != null) {
                             for(LineaBus lb: firebaseViewModel.getUsuarioActual().getValue().getLineaBusSuscripcion()){
-                                if(lb.getUid().equals(firebaseViewModel.getUsuarioActual().getValue().getLineaBus().getUid())){
+                                if(lb.getUid().equals(lineaBusUid)){
                                     tieneSuscripcion = true;
+                                    break;
+                                }else{
+                                    tieneSuscripcion = false;
                                 }
                             }
                         }
@@ -363,10 +368,10 @@ public class LecturaQrFragment extends Fragment {
 
 
                         if(!tieneSuscripcion){
-                            campos.put("saldo", firebaseViewModel.getUsuarioActual().getValue().getSaldo()-lineaBusDTO.getPrecioUnitario());
+                            campos.put("saldo", Double.parseDouble(String.format("%.1f",firebaseViewModel.getUsuarioActual().getValue().getSaldo()-lineaBusDTO.getPrecioUnitario())));
 
                             // Actualización de la recaudación del bus y de la empresa:
-                            db.collection("lineaBus").document(lineaBusUid).update("recaudacion",lineaBusDTO.getRecaudacion()+lineaBusDTO.getPrecioUnitario())
+                            db.collection("lineaBus").document(lineaBusUid).update("recaudacion",Double.parseDouble(String.format("%.1f",lineaBusDTO.getRecaudacion()+lineaBusDTO.getPrecioUnitario())))
                                     .addOnSuccessListener(documentSnapshot1 -> {
                                         Log.d("TAG", "empezarViaje: 5  ");
                                         lineaBusDTO.getRefEmpresa().get()
@@ -374,7 +379,7 @@ public class LecturaQrFragment extends Fragment {
                                                             if(documentSnapshot2.exists()){
                                                                 Log.d("TAG", "empezarViaje: 6  ");
                                                                 UsuarioDTO empresaDTO = documentSnapshot2.toObject(UsuarioDTO.class);
-                                                                lineaBusDTO.getRefEmpresa().update("recaudacion",empresaDTO.getRecaudacion()+lineaBusDTO.getPrecioUnitario())
+                                                                lineaBusDTO.getRefEmpresa().update("recaudacion",Double.parseDouble(String.format("%.1f",empresaDTO.getRecaudacion()+lineaBusDTO.getPrecioUnitario())))
                                                                         .addOnSuccessListener(documentSnapshot3 -> {
                                                                             Log.d("TAG", "empezarViaje: 7  ");
                                                                             db.collection("usuario").document(auth.getUid()).update(campos)
@@ -416,7 +421,7 @@ public class LecturaQrFragment extends Fragment {
                         // Validación de suscripción:
                         if(firebaseViewModel.getUsuarioActual().getValue() != null && firebaseViewModel.getUsuarioActual().getValue().getLineaBus() != null) {
                             for(LineaBus lb: firebaseViewModel.getUsuarioActual().getValue().getLineaBusSuscripcion()){
-                                if(lb.getUid().equals(firebaseViewModel.getUsuarioActual().getValue().getLineaBus().getUid())){
+                                if(lb.getUid().equals(lineaBusUid)){
                                     tieneSuscripcion = true;
                                 }
                             }

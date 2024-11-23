@@ -153,7 +153,6 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     // -> Usuario:
-
     public void suscribirUsuarioBus(){
         Usuario usuario = firebaseViewModel.getUsuarioActual().getValue();
         if(usuario.getSaldo()<lineaBus.getPrecioSuscripcion()){
@@ -174,16 +173,16 @@ public class DetailsActivity extends AppCompatActivity {
             listRefLineaBusSuscripcion.add(db.collection("lineaBus").document(lineaBus.getUid()));
             HashMap<String, Object> campos = new HashMap();
             campos.put("refLineaBusSuscripcion",listRefLineaBusSuscripcion);
-            campos.put("saldo",usuario.getSaldo()-lineaBus.getPrecioSuscripcion());
+            campos.put("saldo",Double.parseDouble(String.format("%.1f",usuario.getSaldo()-lineaBus.getPrecioSuscripcion())));
             db.collection("usuario").document(usuario.getUid()).update(campos)
                     .addOnCompleteListener(document -> {
                         if(document.isSuccessful()){
                             // Actualización en la línea de bus:
-                            db.collection("lineaBus").document(lineaBus.getUid()).update("recaudacion",lineaBus.getRecaudacion()+lineaBus.getPrecioSuscripcion())
+                            db.collection("lineaBus").document(lineaBus.getUid()).update("recaudacion",Double.parseDouble(String.format("%.1f",lineaBus.getRecaudacion()+lineaBus.getPrecioSuscripcion())))
                                     .addOnCompleteListener(documente -> {
                                         if(documente.isSuccessful()){
                                             // Actualización de la empresa:
-                                            db.collection("usuario").document(lineaBus.getEmpresa().getUid()).update("recaudacion",lineaBus.getEmpresa().getRecaudacion()+lineaBus.getPrecioSuscripcion())
+                                            db.collection("usuario").document(lineaBus.getEmpresa().getUid()).update("recaudacion",Double.parseDouble(String.format("%.1f",lineaBus.getEmpresa().getRecaudacion()+lineaBus.getPrecioSuscripcion())))
                                                     .addOnCompleteListener(documenti -> {
                                                         if(documenti.isSuccessful()){
                                                             cerrarDialogoProgreso();
@@ -205,7 +204,6 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     // -> Vistas:
-
     public void actualizarUI(Usuario usuario, LineaBus lineaBus){
         if(usuario == null){
             binding.btnSuscribirseBus.setText("Cargando");

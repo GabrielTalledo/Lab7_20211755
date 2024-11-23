@@ -3,7 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginEnd="15dp">
+    android:foreground="?attr/selectableItemBackground"
+    app:shapeAppearance="?attr/shapeAppearanceCornerExtraLarge"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp">
 
     <LinearLayout
         android:id="@+id/progress_layout_carrusel"
@@ -33,9 +36,10 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_gravity="end|top"
-        android:layout_margin="3dp"
+        android:layout_margin="6dp"
         android:src="@drawable/editar"
         android:backgroundTint="@color/md_theme_primary"
+        android:elevation="8dp"
         android:contentDescription="Editar imagen"/>
 
     <ImageButton
@@ -43,8 +47,9 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_gravity="end|bottom"
-        android:layout_margin="3dp"
+        android:layout_margin="6dp"
         android:src="@drawable/eliminar"
+        android:elevation="8dp"
         android:backgroundTint="@color/md_theme_tertiaryContainer_mediumContrast"
         android:contentDescription="Editar imagen"/>
 </com.google.android.material.carousel.MaskableFrameLayout>
