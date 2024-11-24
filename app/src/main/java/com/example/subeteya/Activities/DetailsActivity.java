@@ -192,7 +192,7 @@ public class DetailsActivity extends AppCompatActivity {
                                                     .addOnCompleteListener(documenti -> {
                                                         if(documenti.isSuccessful()){
                                                             cerrarDialogoProgreso();
-                                                            Snackbar.make(this, binding.getRoot(), "Suscripción realizada con éxito! Saldo actual S/. "+(usuario.getSaldo()-lineaBus.getPrecioSuscripcion()), Snackbar.LENGTH_LONG).show();
+                                                            Snackbar.make(this, binding.getRoot(), "Suscripción realizada con éxito! Saldo actual S/. "+String.format("%.1f",(usuario.getSaldo()-lineaBus.getPrecioSuscripcion())), Snackbar.LENGTH_LONG).show();
                                                         }else{
                                                             Snackbar.make(this, binding.getRoot(), "Error al intentar suscribirse! (Empresa)", Snackbar.LENGTH_LONG).show();
                                                         }

@@ -10,6 +10,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.subeteya.Beans.Auxiliar;
+import com.example.subeteya.Beans.LineaBus;
+import com.example.subeteya.Beans.Viaje;
+import com.example.subeteya.Dialogs.ViajeBottomSheetDialog;
+import com.example.subeteya.Fragments.HistorialFragment;
 import com.example.subeteya.Fragments.LecturaQrFragment;
 import com.example.subeteya.Fragments.LineaBusFragment;
 import com.example.subeteya.R;
@@ -58,6 +63,7 @@ public class UsuarioOperativoActivity extends AppCompatActivity implements Botto
         firebaseViewModel.recargarUsuarioActual(auth.getCurrentUser().getUid());
         //firebaseViewModel.obtenerListaLineasBuses();
         firebaseViewModel.recargarListaLineasBuses();
+        firebaseViewModel.recargarListaViajes(auth.getCurrentUser().getUid());
 
         // Gestión de intent (mensajito):
         Intent intent = getIntent();
@@ -89,12 +95,22 @@ public class UsuarioOperativoActivity extends AppCompatActivity implements Botto
         if(item.getItemId() == R.id.usuario_qr){
             fragmentoSeleccionado = new LecturaQrFragment();
         }
+        if(item.getItemId() == R.id.usuario_historial){
+            fragmentoSeleccionado = new HistorialFragment();
+        }
 
         if(item.getItemId() != bottomNav.getSelectedItemId()){
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_layout, fragmentoSeleccionado).commit();
         }
 
         return true;
+    }
+
+    // -> Diálogo:
+
+    public void mostrarViajeDialog(Viaje viaje, LineaBus lineaBus, int numeroViaje){
+        ViajeBottomSheetDialog viajeDialog = new ViajeBottomSheetDialog(viaje, lineaBus,numeroViaje);
+        viajeDialog.show(getSupportFragmentManager(), "viajeDialog");
     }
 
 }

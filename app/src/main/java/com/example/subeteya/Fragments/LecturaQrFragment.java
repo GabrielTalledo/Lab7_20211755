@@ -188,78 +188,60 @@ public class LecturaQrFragment extends Fragment {
     public void actualizarVistaFlujoViaje(Usuario usuario){
         binding.textUsuarioActual.setText(usuario.getNombreCompleto());
         binding.textSaldoActual.setText("S/. "+String.format("%.1f",usuario.getSaldo()));
-        if(usuario.getLineaBus() != null){
-            // Primera etapa: En ningún viaje (Fecha inicio nula o Fecha de fin no nula)
-            if(usuario.getFechaInicio() == null){
-                binding.layoutImagenViajeUsuario.setVisibility(View.GONE);
-                binding.layoutInfoViajeUsuario.setVisibility(View.GONE);
-                binding.textEstadoActual.setText("En ningún viaje");
+
+        // Primera etapa: En ningún viaje (Fecha inicio nula o Fecha de fin no nula)
+        if(usuario.getFechaInicio() == null || usuario.getLineaBus() == null){
+            binding.layoutImagenViajeUsuario.setVisibility(View.GONE);
+            binding.layoutInfoViajeUsuario.setVisibility(View.GONE);
+            binding.textEstadoActual.setText("En ningún viaje");
+        }else{
+            // Segunda etapa: En viaje (Lectura QR, pago completo del costo original)
+            if(usuario.getFechaFin() == null){
+                Log.d("TAG", "usuario BUS: "+usuario.getLineaBus().toString());
+                Log.d("TAG", "usuario BUS nombre: "+usuario.getLineaBus().getNombre());
+                binding.layoutImagenViajeUsuario.setVisibility(View.VISIBLE);
+                binding.layoutInfoViajeUsuario.setVisibility(View.VISIBLE);
+                binding.textEstadoActual.setText("En viaje");
+                binding.textLineaBusViaje.setText(usuario.getLineaBus().getNombre());
+                binding.textFechaInicioViaje.setText(usuario.getFechaInicioBonita());
+                binding.textFechaFinViaje.setText(usuario.getFechaFinBonita());
+                binding.textCostoOriginalViaje.setText("S/. "+usuario.getLineaBus().getPrecioUnitario());
+                cargarImagenDesdeStorage(usuario.getLineaBus());
+                if(tieneSuscripcion){
+                    binding.textCostoFinalViaje.setText("Ninguno, usted posee una suscripción");
+                }else{
+                    binding.textCostoFinalViaje.setText("-");
+                }
             }else{
-                // Segunda etapa: En viaje (Lectura QR, pago completo del costo original)
-                if(usuario.getFechaFin() == null){
-                    Log.d("TAG", "usuario BUS: "+usuario.getLineaBus().toString());
+                // Tercera etapa: Fin de viaje (Lectura QR, cashback del pago)
+                if(usuario.getFechaInicio() != null && usuario.getFechaFin() != null){
+                    Log.d("TAG", "usuario: "+usuario.getLineaBus().toString());
                     Log.d("TAG", "usuario BUS nombre: "+usuario.getLineaBus().getNombre());
                     binding.layoutImagenViajeUsuario.setVisibility(View.VISIBLE);
                     binding.layoutInfoViajeUsuario.setVisibility(View.VISIBLE);
-                    binding.textEstadoActual.setText("En viaje");
+                    binding.textEstadoActual.setText("Viaje finalizado");
                     binding.textLineaBusViaje.setText(usuario.getLineaBus().getNombre());
                     binding.textFechaInicioViaje.setText(usuario.getFechaInicioBonita());
                     binding.textFechaFinViaje.setText(usuario.getFechaFinBonita());
-                    binding.textCostoOriginalViaje.setText("S/. "+usuario.getLineaBus().getPrecioUnitario());
                     cargarImagenDesdeStorage(usuario.getLineaBus());
+                    binding.textCostoOriginalViaje.setText("S/. "+usuario.getLineaBus().getPrecioUnitario());
+
                     if(tieneSuscripcion){
                         binding.textCostoFinalViaje.setText("Ninguno, usted posee una suscripción");
                     }else{
-                        binding.textCostoFinalViaje.setText("-");
-                    }
-                }else{
-                    // Tercera etapa: Fin de viaje (Lectura QR, cashback del pago)
-                    if(usuario.getFechaInicio() != null && usuario.getFechaFin() != null){
-                        Log.d("TAG", "usuario: "+usuario.getLineaBus().toString());
-                        Log.d("TAG", "usuario BUS nombre: "+usuario.getLineaBus().getNombre());
-                        binding.layoutImagenViajeUsuario.setVisibility(View.VISIBLE);
-                        binding.layoutInfoViajeUsuario.setVisibility(View.VISIBLE);
-                        binding.textEstadoActual.setText("Viaje finalizado");
-                        binding.textLineaBusViaje.setText(usuario.getLineaBus().getNombre());
-                        binding.textFechaInicioViaje.setText(usuario.getFechaInicioBonita());
-                        binding.textFechaFinViaje.setText(usuario.getFechaFinBonita());
-                        cargarImagenDesdeStorage(usuario.getLineaBus());
-                        binding.textCostoOriginalViaje.setText("S/. "+usuario.getLineaBus().getPrecioUnitario());
-
-                        if(tieneSuscripcion){
-                            binding.textCostoFinalViaje.setText("Ninguno, usted posee una suscripción");
+                        long diferenciaMinutos = obtenerDiferenciaEnMinutos(usuario.getFechaFin(),usuario.getFechaInicio());
+                        Double costoFinal;
+                        if(diferenciaMinutos<umbralTiempo){
+                            costoFinal = Double.parseDouble(String.format("%.1f",usuario.getLineaBus().getPrecioUnitario()-usuario.getLineaBus().getPrecioUnitario()*0.2));
                         }else{
-                            long diferenciaMinutos = obtenerDiferenciaEnMinutos(usuario.getFechaFin(),usuario.getFechaInicio());
-                            Double costoFinal;
-                            if(diferenciaMinutos<umbralTiempo){
-                                costoFinal = Double.parseDouble(String.format("%.1f",usuario.getLineaBus().getPrecioUnitario()-usuario.getLineaBus().getPrecioUnitario()*0.2));
-                            }else{
-                                costoFinal = Double.parseDouble(String.format("%.1f",usuario.getLineaBus().getPrecioUnitario()-usuario.getLineaBus().getPrecioUnitario()*0.05));
-                            }
-                            binding.textCostoFinalViaje.setText("S/. "+costoFinal);
+                            costoFinal = Double.parseDouble(String.format("%.1f",usuario.getLineaBus().getPrecioUnitario()-usuario.getLineaBus().getPrecioUnitario()*0.05));
                         }
+                        binding.textCostoFinalViaje.setText("S/. "+costoFinal);
                     }
                 }
             }
-        }else{
-            // Forzamos a que el usuario tenga todos sus atributos mapeados:
-            db.collection("usuario").document(usuario.getUid())
-                    .get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            UsuarioDTO usuarioDTO = documentSnapshot.toObject(UsuarioDTO.class);
-                            firebaseViewModel.mapearUsuarioDtoABean(usuarioDTO, documentSnapshot.getId()).addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    Usuario usuarioAux = task.getResult();
-                                    actualizarVistaFlujoViaje(usuarioAux);
-                                    Log.d("Firestore", "Usuario mapeado correctamente: " + usuario);
-                                } else {
-                                    Log.d("Firestore", "Error al mapear usuario", task.getException());
-                                }
-                            });
-                        }
-                    });
         }
+
     }
 
     // -> Métodos para el QR:
@@ -362,7 +344,7 @@ public class LecturaQrFragment extends Fragment {
                         viaje.setFechaInicio(fechaInicioAux);
                         campos.put("fechaInicio", fechaInicioAux);
                         // Reasignación de fecha de fin:
-                        viaje.setFechaInicio(null);
+                        viaje.setFechaFin(null);
                         campos.put("fechaFin", null);
                         // Asignación de referencia de bus:
                         viaje.setLineaBusUid(lineaBusUid);
@@ -444,8 +426,8 @@ public class LecturaQrFragment extends Fragment {
                                         camposViaje.put("fechaFin", fechaFin);
                                         campos.put("fechaFin", fechaFin);
                                         long diferenciaMinutos = obtenerDiferenciaEnMinutos(fechaFin,firebaseViewModel.getUsuarioActual().getValue().getFechaInicio());
-                                        camposViaje.put("duracion",new Timestamp(diferenciaMinutos*60, 0));
-
+                                        camposViaje.put("duracion",new Timestamp(obtenerDiferenciaEnSegundos(fechaFin,firebaseViewModel.getUsuarioActual().getValue().getFechaInicio()), 0));
+                                        Log.d("TAG", "duracion pal viaje: " + camposViaje.get("duracion"));
                                         Log.d("TAG", "diferencia en minutos: "+diferenciaMinutos);
 
                                         // Validación de suscripción:
@@ -456,6 +438,8 @@ public class LecturaQrFragment extends Fragment {
                                                 }
                                             }
                                         }
+
+                                        campos.put("refLineaBus",null);
 
                                         if(!tieneSuscripcion){
 
@@ -473,7 +457,7 @@ public class LecturaQrFragment extends Fragment {
                                             }
 
                                             campos.put("saldo", Double.parseDouble(String.format("%.1f",firebaseViewModel.getUsuarioActual().getValue().getSaldo()+cashback)));
-                                            camposViaje.put("costoFinal",String.format("%.1f",lineaBusDTO.getPrecioUnitario()-cashback));
+                                            camposViaje.put("costoFinal",Double.parseDouble(String.format("%.1f",lineaBusDTO.getPrecioUnitario()-cashback)));
 
                                             db.collection("lineaBus").document(lineaBusUid).update("recaudacion",Double.parseDouble(String.format("%.1f",lineaBusDTO.getRecaudacion()-cashback)))
                                                     .addOnSuccessListener(documentSnapshot1 -> {
@@ -560,6 +544,18 @@ public class LecturaQrFragment extends Fragment {
         long diferenciaEnMinutos = diferenciaEnMilisegundos / (1000 * 60);
 
         return diferenciaEnMinutos;
+    }
+
+    public long obtenerDiferenciaEnSegundos(Timestamp timestamp1, Timestamp timestamp2) {
+        if (timestamp1 == null || timestamp2 == null) {
+            throw new IllegalArgumentException("Los Timestamps no pueden ser nulos");
+        }
+
+        long tiempo1 = timestamp1.getSeconds();
+        long tiempo2 = timestamp2.getSeconds();
+        long diferenciaEnSegundos = Math.abs(tiempo1 - tiempo2);
+
+        return diferenciaEnSegundos;
     }
 
 

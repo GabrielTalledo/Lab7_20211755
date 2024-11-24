@@ -6,7 +6,6 @@ import com.google.firebase.Timestamp;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 public class Viaje implements Serializable {
@@ -23,29 +22,39 @@ public class Viaje implements Serializable {
     private String usuarioUid;
     private Timestamp duracion;
 
+    // Auxiliares:
+    private String fechaInicioBonita;
+    private String fechaFinBonita;
+    private String duracionBonita;
+
+
     // ---------------------------
     //          MÉTODOS:
     // ---------------------------
 
-    public String getFechaInicioBonita() {
+    public String getFechaInicioBonitaMetodo() {
         if (this.fechaInicio == null) {
             return "-";
         }
         Date fecha = this.fechaInicio.toDate();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy 'a las' HH:mm", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy 'a las' HH:mm", Locale.getDefault());
         return sdf.format(fecha);
     }
 
-    public String getFechaFinBonita() {
+    public String getFechaFinBonitaMetodo() {
         if (this.fechaFin == null) {
             return "-";
         }
         Date fecha = this.fechaFin.toDate();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy 'a las' HH:mm", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy 'a las' HH:mm", Locale.getDefault());
         return sdf.format(fecha);
     }
 
-    public String getDuracionBonita() {
+    public String getDuracionBonitaMetodo() {
+        if(this.duracion == null){
+            return "-";
+        }
+
         long segundosTotales = this.duracion.getSeconds();
         long minutos = segundosTotales / 60;
         long segundos = segundosTotales % 60;
@@ -57,6 +66,31 @@ public class Viaje implements Serializable {
     // ---------------------------
     //      GETTER Y SETTERS:
     // ---------------------------
+
+
+    public String getDuracionBonita() {
+        return duracionBonita;
+    }
+
+    public void setDuracionBonita(String duracionBonita) {
+        this.duracionBonita = duracionBonita;
+    }
+
+    public String getFechaFinBonita() {
+        return fechaFinBonita;
+    }
+
+    public void setFechaFinBonita(String fechaFinBonita) {
+        this.fechaFinBonita = fechaFinBonita;
+    }
+
+    public String getFechaInicioBonita() {
+        return fechaInicioBonita;
+    }
+
+    public void setFechaInicioBonita(String fechaInicioBonita) {
+        this.fechaInicioBonita = fechaInicioBonita;
+    }
 
     public Timestamp getDuracion() {
         return duracion;
@@ -70,8 +104,14 @@ public class Viaje implements Serializable {
         return costoFinal;
     }
 
-    public void setCostoFinal(Double costoFinal) {
-        this.costoFinal = Double.parseDouble(String.format("%.1f",costoFinal));
+    public void setCostoFinal(Object costoFinal) {
+        if (costoFinal instanceof String) {
+            this.costoFinal = Double.parseDouble((String) costoFinal);
+        } else if (costoFinal instanceof Number) {
+            this.costoFinal = ((Number) costoFinal).doubleValue();
+        } else {
+            this.costoFinal = 0.0; // Valor por defecto o manejo de error
+        }
     }
 
     public Double getCostoOriginal() {

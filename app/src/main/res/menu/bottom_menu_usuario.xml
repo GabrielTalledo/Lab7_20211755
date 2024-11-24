@@ -9,4 +9,9 @@
         android:enabled="true"
         android:icon="@drawable/qr"
         android:title="QR" />
+    <item
+        android:id="@+id/usuario_historial"
+        android:enabled="true"
+        android:icon="@drawable/historial"
+        android:title="Historial" />
 </menu>

@@ -18,6 +18,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 
@@ -351,7 +352,7 @@ public class FirebaseViewModel extends ViewModel {
 
     // -> Métodos para mapeo DTO a Bean:
 
-    public Task<Usuario> mapearUsuarioDtoABean(UsuarioDTO usuarioDTO, String uid) {
+    /*public Task<Usuario> mapearUsuarioDtoABean(UsuarioDTO usuarioDTO, String uid) {
         Usuario usuario = new Usuario();
 
         // Atributos normales:
@@ -432,7 +433,96 @@ public class FirebaseViewModel extends ViewModel {
                 return usuario;
             });
         });
+    }*/
+
+    public Task<Usuario> mapearUsuarioDtoABean(UsuarioDTO usuarioDTO, String uid) {
+        Usuario usuario = new Usuario();
+
+        // Atributos normales:
+        usuario.setNombre(usuarioDTO.getNombre());
+        usuario.setApellido(usuarioDTO.getApellido());
+        usuario.setCorreo(usuarioDTO.getCorreo());
+        usuario.setRol(usuarioDTO.getRol());
+        usuario.setSaldo(usuarioDTO.getSaldo());
+        usuario.setFechaInicio(usuarioDTO.getFechaInicio());
+        usuario.setFechaFin(usuarioDTO.getFechaFin());
+        usuario.setUid(uid);
+        usuario.setNombreEmpresa(usuarioDTO.getNombreEmpresa());
+        usuario.setRecaudacion(usuarioDTO.getRecaudacion());
+
+        List<Task<?>> allTasks = new ArrayList<>(); // Todas las tareas asíncronas
+
+        // Mapeo del bus de viaje actual:
+
+        Task<LineaBus> lineaBusTask = Tasks.forResult(null);
+         // Inicializamos un Task vacío
+        if (usuarioDTO.getRefLineaBus() != null) {
+            lineaBusTask = usuarioDTO.getRefLineaBus().get()
+                    .continueWithTask(task -> {
+                        if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                            LineaBusDTO lineaBusDTO = task.getResult().toObject(LineaBusDTO.class);
+                            return mapearLineaBusDtoABean(lineaBusDTO, task.getResult().getId());
+                        } else {
+                            return Tasks.forResult(null);
+                        }
+                    }).addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            usuario.setLineaBus(task.getResult());
+                        } else {
+                            usuario.setLineaBus(null);
+                        }
+                    });
+            allTasks.add(lineaBusTask);
+        } else {
+            usuario.setLineaBus(null);
+        }
+
+        // Mapeo de buses de suscripción:
+        Task<List<LineaBus>> lineaBusSuscripcionTask = Tasks.forResult(new ArrayList<>());
+        if (usuarioDTO.getRefLineaBusSuscripcion() != null) {
+            List<Task<LineaBus>> suscripcionTasks = new ArrayList<>();
+            for (DocumentReference refLineaBusDTO : usuarioDTO.getRefLineaBusSuscripcion()) {
+                Task<LineaBus> lineaBusTaskAlt = refLineaBusDTO.get()
+                        .continueWithTask(task -> {
+                            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                                LineaBusDTO lineaBusDTO = task.getResult().toObject(LineaBusDTO.class);
+                                return mapearLineaBusDtoABean(lineaBusDTO, task.getResult().getId());
+                            } else {
+                                return Tasks.forResult(null);
+                            }
+                        });
+                suscripcionTasks.add(lineaBusTaskAlt);
+            }
+
+            // Cuando todas las tareas de suscripción terminen:
+            lineaBusSuscripcionTask = Tasks.whenAllComplete(suscripcionTasks).continueWith(task -> {
+                List<LineaBus> listaLineasBusesSuscripcion = new ArrayList<>();
+                for (Task<LineaBus> lineaBusTaskAlt2 : suscripcionTasks) {
+                    if (lineaBusTaskAlt2.isSuccessful() && lineaBusTaskAlt2.getResult() != null) {
+                        listaLineasBusesSuscripcion.add(lineaBusTaskAlt2.getResult());
+                    }
+                }
+                return listaLineasBusesSuscripcion;
+            }).addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    usuario.setLineaBusSuscripcion(task.getResult());
+                } else {
+                    usuario.setLineaBusSuscripcion(new ArrayList<>());
+                }
+            });
+            allTasks.add(lineaBusSuscripcionTask);
+        } else {
+            usuario.setLineaBusSuscripcion(new ArrayList<>());
+        }
+
+        // Esperamos a que todas las tareas se completen:
+        return Tasks.whenAllComplete(allTasks).continueWith(task -> {
+            // Retornamos el usuario completamente mapeado.
+            return usuario;
+        });
     }
+
+
 
     public Task<LineaBus> mapearLineaBusDtoABean(LineaBusDTO lineaBusDTO, String uid) {
         LineaBus lineaBus = new LineaBus();
@@ -503,6 +593,51 @@ public class FirebaseViewModel extends ViewModel {
                         Log.d("TAG", "Se pudo actualizar el viaje ");
                     }else{
                         Log.d("TAG", "No se pudo actualizar el viaje ");
+                    }
+                });
+    }
+
+    public void recargarListaViajes(String usuarioUid){
+        firestore.collection("viaje")
+                .whereEqualTo("usuarioUid",usuarioUid)
+                .orderBy("fechaInicio", Query.Direction.ASCENDING)
+                .addSnapshotListener((querySnapshot,e) -> {
+                    if (e != null) {
+                        Log.e("Firestore", "Errorcito al escuchar cambios de los viajes", e);
+                        return;
+                    }
+
+                    List<Viaje> listaViajes = new ArrayList<>();
+
+                    if (querySnapshot != null && !querySnapshot.isEmpty()) {
+                        for(DocumentSnapshot ds: querySnapshot.getDocuments()){
+                            Viaje viaje = ds.toObject(Viaje.class);
+                            listaViajes.add(viaje);
+                        }
+                        this.listaViajes.setValue(listaViajes);
+                    }else{
+
+                    }
+                });
+    }
+
+    public void obtenerListaViaje(String usuarioUid){
+        firestore.collection("viaje")
+                .whereEqualTo("usuarioUid",usuarioUid)
+                .orderBy("fechaInicio", Query.Direction.ASCENDING)
+                .get()
+                .addOnCompleteListener(querySnapshot -> {
+                    if(querySnapshot.isSuccessful()){
+                        List<Viaje> listaViajes = new ArrayList<>();
+                        if (querySnapshot.getResult() != null && !querySnapshot.getResult().isEmpty()) {
+                            for(DocumentSnapshot ds: querySnapshot.getResult().getDocuments()){
+                                Viaje viaje = ds.toObject(Viaje.class);
+                                listaViajes.add(viaje);
+                            }
+                            this.listaViajes.setValue(listaViajes);
+                        }else{
+
+                        }
                     }
                 });
     }
