@@ -125,9 +125,9 @@ public class EditActivity extends AppCompatActivity {
 
         // -> Manejo de ViewModels:
         firebaseViewModel = new ViewModelProvider(this).get(FirebaseViewModel.class);
-        firebaseViewModel.obtenerUsuarioActual(auth.getCurrentUser().getUid());
+        //firebaseViewModel.obtenerUsuarioActual(auth.getCurrentUser().getUid());
         firebaseViewModel.recargarUsuarioActual(auth.getCurrentUser().getUid());
-        firebaseViewModel.obtenerLineaBusActual(lineaBus.getUid());
+        //firebaseViewModel.obtenerLineaBusActual(lineaBus.getUid());
         firebaseViewModel.recargarLineaBusActual(lineaBus.getUid());
 
         firebaseViewModel.getUsuarioActual().observe(this, usuario -> {

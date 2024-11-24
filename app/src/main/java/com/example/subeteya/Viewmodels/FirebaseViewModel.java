@@ -8,17 +8,21 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.subeteya.Beans.LineaBus;
 import com.example.subeteya.Beans.Usuario;
+import com.example.subeteya.Beans.Viaje;
 import com.example.subeteya.DTOs.LineaBusDTO;
 import com.example.subeteya.DTOs.UsuarioDTO;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class FirebaseViewModel extends ViewModel {
@@ -32,6 +36,7 @@ public class FirebaseViewModel extends ViewModel {
     private final MutableLiveData<List<LineaBus>> listaLineasBuses = new MutableLiveData<>();
     private final MutableLiveData<LineaBus> lineaBusActual = new MutableLiveData<>();
     private final MutableLiveData<List<LineaBus>> listaLineasBusesEmpresa = new MutableLiveData<>();
+    private final MutableLiveData<List<Viaje>> listaViajes = new MutableLiveData<>();
 
 
     public FirebaseViewModel() {
@@ -60,6 +65,11 @@ public class FirebaseViewModel extends ViewModel {
     public MutableLiveData<List<LineaBus>> getListaLineasBusesEmpresa() {
         return listaLineasBusesEmpresa;
     }
+
+    public MutableLiveData<List<Viaje>> getListaViajes() {
+        return this.listaViajes;
+    }
+
 
     // -> Métodos para usuario:
 
@@ -253,29 +263,6 @@ public class FirebaseViewModel extends ViewModel {
 
     // -> Métodos para lista de líneas de buses:
 
-    /*public void obtenerListaLineasBuses(){
-        firestore.collection("lineaBus")
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (!documentSnapshot.isEmpty()) {
-                        ArrayList<LineaBus> listaLineasBuses = new ArrayList<>();
-                        for(DocumentSnapshot ds: documentSnapshot.getDocuments()){
-                            LineaBusDTO lineaBusDTO = ds.toObject(LineaBusDTO.class);
-                            mapearLineaBusDtoABean(lineaBusDTO, ds.getId()).addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    LineaBus lineaBus = task.getResult();
-                                    lineaBusActual.setValue(lineaBus);
-                                    Log.d("Firestore", "LineaBus mapeado correctamente");
-                                } else {
-                                    Log.e("Firestore", "Error al mapear LineaBus", task.getException());
-                                }
-                            });
-                        }
-                        this.listaLineasBuses.setValue(listaLineasBuses);
-                    }
-                });
-    }*/
-
     public void obtenerListaLineasBuses() {
         firestore.collection("lineaBus")
                 .get()
@@ -320,31 +307,6 @@ public class FirebaseViewModel extends ViewModel {
                 });
     }
 
-
-    /*public void recargarListaLineasBuses(){
-        firestore.collection("lineaBus").addSnapshotListener((documentSnapshot, e) -> {
-            if (e != null) {
-                return;
-            }
-            if (!documentSnapshot.isEmpty()) {
-                ArrayList<LineaBus> listaLineasBuses = new ArrayList<>();
-                for(DocumentSnapshot ds: documentSnapshot.getDocuments()){
-                    LineaBusDTO lineaBusDTO = ds.toObject(LineaBusDTO.class);
-                    mapearLineaBusDtoABean(lineaBusDTO, ds.getId()).addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            LineaBus lineaBus = task.getResult();
-                            lineaBusActual.setValue(lineaBus);
-                            Log.d("Firestore", "LineaBus mapeado correctamente");
-                        } else {
-                            Log.e("Firestore", "Error al mapear LineaBus", task.getException());
-                        }
-                    });
-                }
-                this.listaLineasBuses.setValue(listaLineasBuses);
-            }
-        });
-    }*/
-
     public void recargarListaLineasBuses() {
         firestore.collection("lineaBus").addSnapshotListener((querySnapshot, e) -> {
             if (e != null) {
@@ -387,56 +349,7 @@ public class FirebaseViewModel extends ViewModel {
         });
     }
 
-
-
     // -> Métodos para mapeo DTO a Bean:
-
-    /*public Usuario mapearUsuarioDtoABean(UsuarioDTO usuarioDTO, String uid) {
-        Usuario usuario = new Usuario();
-
-        // Atributos normales:
-        usuario.setNombre(usuarioDTO.getNombre());
-        usuario.setApellido(usuarioDTO.getApellido());
-        usuario.setCorreo(usuarioDTO.getCorreo());
-        usuario.setRol(usuarioDTO.getRol());
-        usuario.setSaldo(usuarioDTO.getSaldo());
-        usuario.setFechaInicio(usuarioDTO.getFechaInicio());
-        usuario.setFechaFin(usuarioDTO.getFechaFin());
-        usuario.setUid(uid);
-
-        // Bus de viaje actual:
-        if(usuarioDTO.getRefLineaBus() != null){
-            usuarioDTO.getRefLineaBus().get().addOnCompleteListener(documentSnapshot -> {
-                if (documentSnapshot.isSuccessful() && documentSnapshot.getResult().exists()) {
-                    LineaBusDTO lineaBusDTO= documentSnapshot.getResult().toObject(LineaBusDTO.class);
-                    usuario.setLineaBus(mapearLineaBusDtoABean(lineaBusDTO,documentSnapshot.getResult().getId()));
-                }else{
-                    usuario.setLineaBus(null);
-                }
-            });
-        }else{
-            usuario.setLineaBus(null);
-        }
-
-        // Buses de suscripción actual:
-
-        if(usuarioDTO.getRefLineaBusSuscripcion() != null){
-            for(DocumentReference refLineaBusDTO: usuarioDTO.getRefLineaBusSuscripcion()){
-                refLineaBusDTO.get().addOnCompleteListener(documentSnapshot -> {
-                    List<LineaBus> listaLineasBusesSuscripcion = new ArrayList<>();
-                    if (documentSnapshot.isSuccessful() && documentSnapshot.getResult().exists()) {
-                        listaLineasBusesSuscripcion.add(mapearLineaBusDtoABean(documentSnapshot.getResult().toObject(LineaBusDTO.class),documentSnapshot.getResult().getId()));
-                    }
-                    usuario.setLineaBusSuscripcion(listaLineasBusesSuscripcion);
-                });
-            }
-        }else{
-            usuario.setLineaBusSuscripcion(new ArrayList<>());
-        }
-
-
-        return usuario;
-    }*/
 
     public Task<Usuario> mapearUsuarioDtoABean(UsuarioDTO usuarioDTO, String uid) {
         Usuario usuario = new Usuario();
@@ -521,37 +434,6 @@ public class FirebaseViewModel extends ViewModel {
         });
     }
 
-
-    /*public LineaBus mapearLineaBusDtoABean(LineaBusDTO lineaBusDTO, String uid) {
-        LineaBus lineaBus = new LineaBus();
-
-        // Atributos normales:
-        lineaBus.setNombre(lineaBusDTO.getNombre());
-        lineaBus.setPrecioUnitario(lineaBusDTO.getPrecioUnitario());
-        lineaBus.setPrecioSuscripcion(lineaBusDTO.getPrecioSuscripcion());
-        lineaBus.setRecaudacion(lineaBusDTO.getRecaudacion());
-        lineaBus.setRutasCarrusel(lineaBusDTO.getRutasCarrusel());
-        lineaBus.setUid(uid);
-
-        // Empresa de transporte (Usuario dueño):
-        lineaBusDTO.getRefEmpresa().get().addOnCompleteListener(documentSnapshot -> {
-            if (documentSnapshot.isSuccessful() && documentSnapshot.getResult().exists()) {
-                UsuarioDTO empresaDTO = documentSnapshot.getResult().toObject(UsuarioDTO.class);
-                Usuario empresa = new Usuario();
-                empresa.setNombreEmpresa(empresaDTO.getNombreEmpresa());
-                empresa.setCorreo(empresaDTO.getCorreo());
-                empresa.setRol(empresaDTO.getRol());
-                empresa.setUid(documentSnapshot.getResult().getId());
-                empresa.setRecaudacion(empresaDTO.getRecaudacion());
-                lineaBus.setEmpresa(empresa);
-            }else{
-                lineaBus.setEmpresa(null);
-            }
-        });
-
-        return lineaBus;
-    }*/
-
     public Task<LineaBus> mapearLineaBusDtoABean(LineaBusDTO lineaBusDTO, String uid) {
         LineaBus lineaBus = new LineaBus();
 
@@ -586,7 +468,44 @@ public class FirebaseViewModel extends ViewModel {
         });
     }
 
+    // ----------
+    //   CRUDS:
+    // ----------
 
+    // Métodos para viajes (Actual e historial):
+
+    public void registrarViaje(Viaje viaje){
+        firestore.collection("viaje")
+                .add(viaje)
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()){
+                        Log.d("TAG", "Se pudo registrar el viaje ");
+
+                    }else{
+                        Log.d("TAG", "No se pudo registrar el viaje ");
+                    }
+                });
+    }
+
+    public Task<QuerySnapshot> obtenerViaje(String usuarioUid, Timestamp fechaInicio){
+        return firestore.collection("viaje")
+                .whereEqualTo("usuarioUid",usuarioUid)
+                .whereEqualTo("fechaInicio",fechaInicio)
+                .get();
+    }
+
+    public void actualizarViaje(String viajeUid, HashMap<String,Object> campos){
+        firestore.collection("viaje")
+                .document(viajeUid)
+                .update(campos)
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()){
+                        Log.d("TAG", "Se pudo actualizar el viaje ");
+                    }else{
+                        Log.d("TAG", "No se pudo actualizar el viaje ");
+                    }
+                });
+    }
 
 
 

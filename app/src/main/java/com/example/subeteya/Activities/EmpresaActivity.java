@@ -55,9 +55,9 @@ public class EmpresaActivity extends AppCompatActivity implements BottomNavigati
 
         // Manejo de ViewModels:
         firebaseViewModel = new ViewModelProvider(this).get(FirebaseViewModel.class);
-        firebaseViewModel.obtenerUsuarioActual(auth.getCurrentUser().getUid());
+        //firebaseViewModel.obtenerUsuarioActual(auth.getCurrentUser().getUid());
         firebaseViewModel.recargarUsuarioActual(auth.getCurrentUser().getUid());
-        firebaseViewModel.obtenerListaLineasBusesEmpresa(auth.getCurrentUser().getUid());
+        //firebaseViewModel.obtenerListaLineasBusesEmpresa(auth.getCurrentUser().getUid());
         firebaseViewModel.recargarListaLineasBusesEmpresa(auth.getCurrentUser().getUid());
 
         // Gestión de intent (mensajito):

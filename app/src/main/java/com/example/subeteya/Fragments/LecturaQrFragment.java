@@ -24,6 +24,7 @@ import com.example.subeteya.Activities.LoginActivity;
 import com.example.subeteya.Adapters.LineaBusAdapter;
 import com.example.subeteya.Beans.LineaBus;
 import com.example.subeteya.Beans.Usuario;
+import com.example.subeteya.Beans.Viaje;
 import com.example.subeteya.DTOs.LineaBusDTO;
 import com.example.subeteya.DTOs.UsuarioDTO;
 import com.example.subeteya.Modules.GlideApp;
@@ -39,6 +40,7 @@ import com.google.firebase.storage.StorageReference;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
+import java.sql.Time;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -115,7 +117,6 @@ public class LecturaQrFragment extends Fragment {
         // |-> Observadores:
 
         // -> Datos del usuario:
-
 
         actualizarVistaFlujoViaje(firebaseViewModel.getUsuarioActual().getValue());
 
@@ -347,21 +348,29 @@ public class LecturaQrFragment extends Fragment {
     // -> Métodos para los pagos, recaudación y el cashback:
     public void empezarViaje(String lineaBusUid){
         mostrarDialogoProgreso();
+        Viaje viaje = new Viaje();
+        viaje.setUsuarioUid(firebaseViewModel.getUsuarioActual().getValue().getUid());
+
         db.collection("lineaBus").document(lineaBusUid).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if(documentSnapshot.exists()){
                         HashMap<String,Object> campos = new HashMap<>();
                         LineaBusDTO lineaBusDTO = documentSnapshot.toObject(LineaBusDTO.class);
+                        viaje.setCostoOriginal(lineaBusDTO.getPrecioUnitario());
                         // Asignación de fecha de inicio:
-                        campos.put("fechaInicio", new Timestamp(new Date()));
+                        Timestamp fechaInicioAux = new Timestamp(new Date());
+                        viaje.setFechaInicio(fechaInicioAux);
+                        campos.put("fechaInicio", fechaInicioAux);
                         // Reasignación de fecha de fin:
+                        viaje.setFechaInicio(null);
                         campos.put("fechaFin", null);
                         // Asignación de referencia de bus:
+                        viaje.setLineaBusUid(lineaBusUid);
                         campos.put("refLineaBus", db.collection("lineaBus").document(lineaBusUid));
+
                         // Actualización de saldo (descuento del costo original):
-                        Log.d("TAG", "empezarViaje: 2 "+firebaseViewModel.getUsuarioActual().getValue().getSaldo());
+
                         // Validación de suscripción:
-                        Log.d("TAG", "empezarViaje: 3 "+firebaseViewModel.getUsuarioActual().getValue().getLineaBusSuscripcion().size());
                         if(firebaseViewModel.getUsuarioActual().getValue() != null && firebaseViewModel.getUsuarioActual().getValue().getLineaBus() != null) {
                             for(LineaBus lb: firebaseViewModel.getUsuarioActual().getValue().getLineaBusSuscripcion()){
                                 if(lb.getUid().equals(lineaBusUid)){
@@ -374,6 +383,7 @@ public class LecturaQrFragment extends Fragment {
                         }
                         Log.d("TAG", "empezarViaje: 4 suscri "+tieneSuscripcion);
 
+                        firebaseViewModel.registrarViaje(viaje);
 
                         if(!tieneSuscripcion){
                             campos.put("saldo", Double.parseDouble(String.format("%.1f",firebaseViewModel.getUsuarioActual().getValue().getSaldo()-lineaBusDTO.getPrecioUnitario())));
@@ -415,72 +425,101 @@ public class LecturaQrFragment extends Fragment {
 
     public void finalizarViaje(String lineaBusUid){
         mostrarDialogoProgreso();
-        db.collection("lineaBus").document(lineaBusUid).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if(documentSnapshot.exists()){
-                        HashMap<String,Object> campos = new HashMap<>();
-                        LineaBusDTO lineaBusDTO = documentSnapshot.toObject(LineaBusDTO.class);
-                        // Asignación de fecha de fin:
-                        Timestamp fechaFin = new Timestamp(new Date());
-                        campos.put("fechaFin", new Timestamp(new Date()));
-                        long diferenciaMinutos = obtenerDiferenciaEnMinutos(fechaFin,firebaseViewModel.getUsuarioActual().getValue().getFechaInicio());
 
-                        Log.d("TAG", "diferencia en minutos: "+diferenciaMinutos);
+        // Obtenemos el viaje:
 
-                        // Validación de suscripción:
-                        if(firebaseViewModel.getUsuarioActual().getValue() != null && firebaseViewModel.getUsuarioActual().getValue().getLineaBus() != null) {
-                            for(LineaBus lb: firebaseViewModel.getUsuarioActual().getValue().getLineaBusSuscripcion()){
-                                if(lb.getUid().equals(lineaBusUid)){
-                                    tieneSuscripcion = true;
-                                }
-                            }
-                        }
+        firebaseViewModel.obtenerViaje(firebaseViewModel.getUsuarioActual().getValue().getUid(),firebaseViewModel.getUsuarioActual().getValue().getFechaInicio())
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        String viajeUid = task.getResult().getDocuments().get(0).getId();
+                        HashMap<String,Object> camposViaje = new HashMap<>();
 
-                        if(!tieneSuscripcion){
+                        db.collection("lineaBus").document(lineaBusUid).get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    if(documentSnapshot.exists()){
+                                        HashMap<String,Object> campos = new HashMap<>();
+                                        LineaBusDTO lineaBusDTO = documentSnapshot.toObject(LineaBusDTO.class);
+                                        // Asignación de fecha de fin:
+                                        Timestamp fechaFin = new Timestamp(new Date());
+                                        camposViaje.put("fechaFin", fechaFin);
+                                        campos.put("fechaFin", fechaFin);
+                                        long diferenciaMinutos = obtenerDiferenciaEnMinutos(fechaFin,firebaseViewModel.getUsuarioActual().getValue().getFechaInicio());
+                                        camposViaje.put("duracion",new Timestamp(diferenciaMinutos*60, 0));
 
-                            // Actualización de saldo y recaudación (cálculo de cashback):
+                                        Log.d("TAG", "diferencia en minutos: "+diferenciaMinutos);
 
-                            Double cashback;
-                            Integer cashbackPorcentaje;
+                                        // Validación de suscripción:
+                                        if(firebaseViewModel.getUsuarioActual().getValue() != null && firebaseViewModel.getUsuarioActual().getValue().getLineaBus() != null) {
+                                            for(LineaBus lb: firebaseViewModel.getUsuarioActual().getValue().getLineaBusSuscripcion()){
+                                                if(lb.getUid().equals(lineaBusUid)){
+                                                    tieneSuscripcion = true;
+                                                }
+                                            }
+                                        }
 
-                            if(diferenciaMinutos<umbralTiempo){
-                                cashback = lineaBusDTO.getPrecioUnitario()*0.2;
-                                cashbackPorcentaje = 20;
-                            }else{
-                                cashback = lineaBusDTO.getPrecioUnitario()*0.05;
-                                cashbackPorcentaje = 5;
-                            }
+                                        if(!tieneSuscripcion){
 
-                            campos.put("saldo", Double.parseDouble(String.format("%.1f",firebaseViewModel.getUsuarioActual().getValue().getSaldo()+cashback)));
+                                            // Actualización de saldo y recaudación (cálculo de cashback):
 
-                            db.collection("lineaBus").document(lineaBusUid).update("recaudacion",Double.parseDouble(String.format("%.1f",lineaBusDTO.getRecaudacion()-cashback)))
-                                    .addOnSuccessListener(documentSnapshot1 -> {
-                                        lineaBusDTO.getRefEmpresa().get()
-                                                .addOnSuccessListener(documentSnapshot2 -> {
-                                                    if(documentSnapshot2.exists()){
-                                                        UsuarioDTO empresaDTO = documentSnapshot2.toObject(UsuarioDTO.class);
-                                                        lineaBusDTO.getRefEmpresa().update("recaudacion",Double.parseDouble(String.format("%.1f",empresaDTO.getRecaudacion()-cashback)))
-                                                                .addOnSuccessListener(documentSnapshot3 -> {
-                                                                    db.collection("usuario").document(auth.getUid()).update(campos)
-                                                                            .addOnSuccessListener(documentSnapshot4 -> {
-                                                                                cerrarDialogoProgreso();
-                                                                                actualizarVistaFlujoViaje(firebaseViewModel.getUsuarioActual().getValue());
-                                                                                mostrarDialogGeneral("Felicidades!","Acaba de finalizar su viaje con la línea '"+lineaBusDTO.getNombre()+"' con un cashback del "+cashbackPorcentaje+"%.");
-                                                                            });
+                                            Double cashback;
+                                            Integer cashbackPorcentaje;
+
+                                            if(diferenciaMinutos<umbralTiempo){
+                                                cashback = lineaBusDTO.getPrecioUnitario()*0.2;
+                                                cashbackPorcentaje = 20;
+                                            }else{
+                                                cashback = lineaBusDTO.getPrecioUnitario()*0.05;
+                                                cashbackPorcentaje = 5;
+                                            }
+
+                                            campos.put("saldo", Double.parseDouble(String.format("%.1f",firebaseViewModel.getUsuarioActual().getValue().getSaldo()+cashback)));
+                                            camposViaje.put("costoFinal",String.format("%.1f",lineaBusDTO.getPrecioUnitario()-cashback));
+
+                                            db.collection("lineaBus").document(lineaBusUid).update("recaudacion",Double.parseDouble(String.format("%.1f",lineaBusDTO.getRecaudacion()-cashback)))
+                                                    .addOnSuccessListener(documentSnapshot1 -> {
+                                                        lineaBusDTO.getRefEmpresa().get()
+                                                                .addOnSuccessListener(documentSnapshot2 -> {
+                                                                    if(documentSnapshot2.exists()){
+                                                                        UsuarioDTO empresaDTO = documentSnapshot2.toObject(UsuarioDTO.class);
+                                                                        lineaBusDTO.getRefEmpresa().update("recaudacion",Double.parseDouble(String.format("%.1f",empresaDTO.getRecaudacion()-cashback)))
+                                                                                .addOnSuccessListener(documentSnapshot3 -> {
+                                                                                    db.collection("usuario").document(auth.getUid()).update(campos)
+                                                                                            .addOnSuccessListener(documentSnapshot4 -> {
+                                                                                                // Actualización del viajes:
+                                                                                                firebaseViewModel.actualizarViaje(viajeUid, camposViaje);
+
+                                                                                                // Actualización del usuario:
+                                                                                                cerrarDialogoProgreso();
+                                                                                                actualizarVistaFlujoViaje(firebaseViewModel.getUsuarioActual().getValue());
+                                                                                                mostrarDialogGeneral("Felicidades!","Acaba de finalizar su viaje con la línea '"+lineaBusDTO.getNombre()+"' con un cashback del "+cashbackPorcentaje+"%.");
+                                                                                            });
+                                                                                });
+                                                                    }
                                                                 });
-                                                    }
-                                                });
-                                    });
-                        }else{
-                            db.collection("usuario").document(auth.getUid()).update(campos)
-                                    .addOnSuccessListener(documentSnapshot4 -> {
-                                        cerrarDialogoProgreso();
-                                        actualizarVistaFlujoViaje(firebaseViewModel.getUsuarioActual().getValue());
-                                        mostrarDialogGeneral("Felicidades!","Acaba de finalizar su viaje con su suscripción a la línea '"+lineaBusDTO.getNombre()+"'.");
-                                    });
-                        }
+                                                    });
+                                        }else{
+                                            // Actualización del viajes:
+                                            camposViaje.put("costoFinal",0.0);
+                                            firebaseViewModel.actualizarViaje(viajeUid, camposViaje);
+
+                                            // Actualización del usuario:
+                                            db.collection("usuario").document(auth.getUid()).update(campos)
+                                                    .addOnSuccessListener(documentSnapshot4 -> {
+                                                        cerrarDialogoProgreso();
+                                                        actualizarVistaFlujoViaje(firebaseViewModel.getUsuarioActual().getValue());
+                                                        mostrarDialogGeneral("Felicidades!","Acaba de finalizar su viaje con su suscripción a la línea '"+lineaBusDTO.getNombre()+"'.");
+                                                    });
+                                        }
+                                    }
+                                });
+                    }else{
+                        cerrarDialogoProgreso();
+                        Log.d("TAG", "error al finalizar y obtenr viaje");
                     }
+
                 });
+
+
     }
 
     // -> Diálogos:

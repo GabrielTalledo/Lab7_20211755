@@ -54,9 +54,9 @@ public class UsuarioOperativoActivity extends AppCompatActivity implements Botto
 
         // Manejo de ViewModels:
         firebaseViewModel = new ViewModelProvider(this).get(FirebaseViewModel.class);
-        firebaseViewModel.obtenerUsuarioActual(auth.getCurrentUser().getUid());
+        //firebaseViewModel.obtenerUsuarioActual(auth.getCurrentUser().getUid());
         firebaseViewModel.recargarUsuarioActual(auth.getCurrentUser().getUid());
-        firebaseViewModel.obtenerListaLineasBuses();
+        //firebaseViewModel.obtenerListaLineasBuses();
         firebaseViewModel.recargarListaLineasBuses();
 
         // Gestión de intent (mensajito):
