@@ -75,7 +75,7 @@ public class HistorialFragment extends Fragment {
 
         // Inicio:
         binding.textAlertaHistorial.setVisibility(View.VISIBLE);
-        binding.textAlertaHistorial.setText("Cargando");
+        binding.textAlertaHistorial.setText("No hay registros");
 
         // ------------
         //   Lógica:

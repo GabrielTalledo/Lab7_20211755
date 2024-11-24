@@ -104,9 +104,11 @@ public class ViajeBottomSheetDialog extends BottomSheetDialogFragment {
         fechaInicioTextView.setText(viaje.getFechaInicioBonitaMetodo());
         fechaFinTextView.setText(viaje.getFechaFinBonitaMetodo());
         costoOriginalTextView.setText("S/. "+viaje.getCostoOriginal());
-        if(viaje.getCostoFinal()!=null && viaje.getCostoFinal() > 0.0000000000000001){
-            costoFinalTextView.setText("S/. "+viaje.getCostoFinal());
-        }else{
+        if (viaje.getCostoFinal() == null) {
+            costoFinalTextView.setText("-");
+        } else if (viaje.getCostoFinal() > 0.0f) {
+            costoFinalTextView.setText("S/. " + viaje.getCostoFinal());
+        } else {
             costoFinalTextView.setText("Ninguno, contaba con suscripción");
         }
         duracionTextView.setText(viaje.getDuracionBonitaMetodo());

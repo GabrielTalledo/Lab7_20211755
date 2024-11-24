@@ -60,7 +60,7 @@ public class Viaje implements Serializable {
         long segundos = segundosTotales % 60;
 
         // Retornar el string formateado
-        return Math.floor(minutos) + " minutos con " + Math.floor(segundos) + " segundos";
+        return (int) minutos + " minutos con " + (int) segundos + " segundos";
     }
 
     // ---------------------------
@@ -104,14 +104,15 @@ public class Viaje implements Serializable {
         return costoFinal;
     }
 
-    public void setCostoFinal(Object costoFinal) {
-        if (costoFinal instanceof String) {
+    public void setCostoFinal(Double costoFinal) {
+        /*if (costoFinal instanceof String) {
             this.costoFinal = Double.parseDouble((String) costoFinal);
         } else if (costoFinal instanceof Number) {
             this.costoFinal = ((Number) costoFinal).doubleValue();
         } else {
             this.costoFinal = 0.0; // Valor por defecto o manejo de error
-        }
+        }*/
+        this.costoFinal = costoFinal;
     }
 
     public Double getCostoOriginal() {
